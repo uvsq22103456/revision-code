@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📱 Révise ton Code - L'Anti-Flemmard (Aléatoire)</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+  body { background-color: #0a0a0a; color: #ffffff; overflow: hidden; }
+
+  #feed {
+    height: 100vh;
+    width: 100vw;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
+  }
+
+  .card {
+    height: 100vh;
+    width: 100vw;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    text-align: center;
+    position: relative;
+  }
+
+  /* COMPTEUR & BADGE */
+  .header-badges {
+    position: absolute;
+    top: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .counter-badge {
+    background: #ffffff;
+    color: #000000;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 900;
+  }
+  .theme-badge {
+    background: rgba(0, 0, 0, 0.5);
+    padding: 8px 16px;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+
+  .emoji-big { font-size: 5rem; margin-bottom: 15px; filter: drop-shadow(0 8px 15px rgba(0,0,0,0.5)); margin-top: 60px; }
+  .title { font-size: 1.8rem; font-weight: 900; margin-bottom: 15px; text-transform: uppercase; line-height: 1.1; }
+  .rule { font-size: 1.1rem; line-height: 1.4; max-width: 95%; margin-bottom: 20px; font-weight: 500; }
+  
+  .reveal-btn {
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid #fff;
+    color: #fff;
+    padding: 14px 28px;
+    font-size: 1rem;
+    font-weight: bold;
+    border-radius: 50px;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    transition: 0.3s;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  }
+  .reveal-btn:active { transform: scale(0.95); background: #fff; color: #000; }
+
+  .secret-info {
+    display: none;
+    margin-top: 15px;
+    padding: 20px;
+    background: #ffffff;
+    color: #000000;
+    border-radius: 15px;
+    font-weight: 700;
+    font-size: 1rem;
+    max-width: 95%;
+    max-height: 35vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+
+  @keyframes pop {
+    0% { opacity: 0; transform: scale(0.8) translateY(20px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .scroll-hint {
+    position: absolute;
+    bottom: 15px;
+    font-size: 0.8rem;
+    opacity: 0.6;
+    animation: bounce 2s infinite;
+  }
+  @keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-10px); }
+    60% { transform: translateY(-5px); }
+  }
+  .math-highlight { color: #ffeb3b; font-weight: 900; }
+  .alert-highlight { color: #ff3b3b; font-weight: 900; }
+</style>
+</head>
+<body>
+
+<div id="feed">
+  </div>
+
+<script>
+  // 💥 BASE DE DONNÉES GÉANTE : LES 60 FICHES ISSUES DE TES NOTES ET DU CODE OFFICIEL 💥
+  const fiches = [
+    // --- LES CALCULS ET DISTANCES ---
+    { theme: "🧮 Calculs", couleur: "linear-gradient(135deg, #1f4037, #99f2c8)", emoji: "⏱️", titre: "Distance de Réaction", regle: "Distance parcourue avant d'appuyer sur le frein (le temps que le cerveau percute).", piege: "Formule : <span class='math-highlight'>Dizaine × 3</span>. À 50 km/h : 5×3 = 15m. Temps de réaction moyen = 1 seconde. L'alcool/fatigue l'augmente, la vitesse NON." },
+    { theme: "🧮 Calculs", couleur: "linear-gradient(135deg, #FF416C, #FF4B2B)", emoji: "🛑", titre: "Distance d'Arrêt (DA)", regle: "Réaction + Freinage. C'est l'arrêt total.", piege: "Formule : <span class='math-highlight'>Dizaine × Dizaine</span>. À 90 km/h = 9×9 = 81m. PIÈGE DE L'EXAMEN : Sur route mouillée, tu rajoutes la moitié ! Ex à 90km/h sous la pluie : 81 + 40 = 121 mètres." },
+    { theme: "🧮 Calculs", couleur: "linear-gradient(135deg, #00B4DB, #0083B0)", emoji: "🚗-🚗", titre: "Distance de Sécurité", regle: "L'espace vital avec la voiture devant (équivaut à 2 secondes).", piege: "Formule : <span class='math-highlight'>Dizaine × 6</span>. À 130 km/h = 13×6 = 78 mètres. Le non-respect de la distance = <span class='alert-highlight'>Retrait de 3 points</span> + Amende." },
+    
+    // --- AUTOROUTE & LIGNES ---
+    { theme: "🛣️ Autoroute & Lignes", couleur: "linear-gradient(135deg, #4b6cb7, #182848)", emoji: "➖", titre: "Les traits de l'Autoroute (BAU)", regle: "Sur autoroute, la bande d'arrêt d'urgence sert de repère.", piege: "Un long trait = <span class='math-highlight'>39 mètres</span>. L'espace vide = <span class='math-highlight'>13 mètres</span>. Distance de sécu à 130km/h = 2 traits de BAU (soit environ 90m d'écart)." },
+    { theme: "🛣️ Autoroute & Lignes", couleur: "linear-gradient(135deg, #2b5876, #4e4376)", emoji: "🛣️", titre: "Les Lignes de Rive (Campagne)", regle: "Les lignes sur le bord droit d'une route de campagne normale.", piege: "Sur une route classique : Trait = <span class='math-highlight'>3 mètres</span>. Espace vide = <span class='math-highlight'>10 mètres</span>. À ne pas confondre avec l'autoroute !" },
+    { theme: "🛣️ Autoroute & Lignes", couleur: "linear-gradient(135deg, #8E2DE2, #4A00E0)", emoji: "🚙", titre: "Ligne de Dissuasion", regle: "Ce sont des petits traits très très rapprochés.", piege: "Elle autorise SEULEMENT le dépassement des véhicules très lents (tracteurs, voiturettes). Interdit de doubler une voiture normale dessus !" },
+    
+    // --- L'ALCOOL ET LE SANG ---
+    { theme: "🍷 Alcool & Drogues", couleur: "linear-gradient(135deg, #f12711, #f5af19)", emoji: "🩸", titre: "Sang ou Air ?", regle: "L'éthylotest (souffler) mesure l'air. La prise de sang mesure les grammes.", piege: "Novice (Probatoire) : Max <span class='alert-highlight'>0,20 g/L (sang)</span> ou <span class='alert-highlight'>0,10 mg/L (air)</span>. C'est simple, le chiffre de l'air est toujours la moitié de celui du sang. 0,2g = Zéro verre." },
+    { theme: "🍷 Alcool & Drogues", couleur: "linear-gradient(135deg, #e65c00, #F9D423)", emoji: "⏳", titre: "Le Pic d'Alcool", regle: "L'alcool ne monte pas immédiatement au maximum dans le sang.", piege: "Le pic d'alcool est atteint en <span class='math-highlight'>30 minutes à jeun</span>, mais il faut <span class='math-highlight'>1 heure avec un repas</span>. Le corps n'élimine que 0,15 g/L par heure en moyenne." },
+    
+    // --- INSTALLATION ET POSTE DE CONDUITE ---
+    { theme: "💺 Installation", couleur: "linear-gradient(135deg, #11998e, #38ef7d)", emoji: "🚘", titre: "La Règle S.D.V.R.C", regle: "L'ordre exact pour s'installer au poste de conduite.", piege: "1. Siège (profondeur). 2. Dossier (inclinaison). 3. Volant. 4. Rétroviseurs. 5. Ceinture. Cet ordre est obligatoire pour l'examen !" },
+    { theme: "💺 Installation", couleur: "linear-gradient(135deg, #56ab2f, #a8e063)", emoji: "🕶️", titre: "Lunettes Polarisées", regle: "Conduire avec des lunettes de soleil.", piege: "Lunettes polarisées = <span class='math-highlight'>AUTORISÉES</span> (très bon contre les reflets). Par contre, lunettes de Classe 4 (glacier/montagne) = <span class='alert-highlight'>STRICTEMENT INTERDITES</span> pour conduire." },
+    { theme: "💺 Installation", couleur: "linear-gradient(135deg, #F2994A, #F2C94C)", emoji: "🦻", titre: "Handicap Auditif", regle: "Une personne sourde a-t-elle le droit de conduire ?", piege: "OUI ! Un sourd peut conduire. Le véhicule doit simplement être équipé de rétroviseurs bilatéraux (des deux côtés) obligatoires." },
+
+    // --- LA MÉCANIQUE ET VOYANTS ---
+    { theme: "🔧 Mécanique", couleur: "linear-gradient(135deg, #cb2d3e, #ef473a)", emoji: "🔊", titre: "Bruit au Freinage", regle: "Un bruit de grincement métallique (crissement) quand on freine.", piege: "C'est l'indicateur d'usure des <span class='math-highlight'>Plaquettes de frein</span> qui frottent sur le disque. Il faut les changer d'urgence." },
+    { theme: "🔧 Mécanique", couleur: "linear-gradient(135deg, #1D976C, #93F9B9)", emoji: "🛞", titre: "Pneus Sous-Gonflés", regle: "Rouler avec des pneus qui manquent d'air.", piege: "Résultat : La consommation de carburant augmente, l'adhérence diminue, et SURTOUT le pneu chauffe et risque <span class='alert-highlight'>l'ÉCLATEMENT</span>." },
+    { theme: "🔧 Mécanique", couleur: "linear-gradient(135deg, #3a7bd5, #3a6073)", emoji: "📏", titre: "Taille des Pneus", regle: "Peut-on mettre des pneus plus larges ?", piege: "C'est interdit si ce n'est pas homologué ! Changer la taille modifie la tenue de route et surtout fausse la vitesse affichée sur le compteur." },
+    { theme: "🔧 Mécanique", couleur: "linear-gradient(135deg, #834d9b, #d04ed6)", emoji: "⚠️", titre: "Coupe-Circuit", regle: "Le fameux bouton rouge de coupure moteur.", piege: "Le bouton rouge sert à couper le moteur en cas d'urgence. Le frein à main est souvent signalé par la lettre 'P' (Parking) sur les commandes." },
+    { theme: "🔧 Mécanique", couleur: "linear-gradient(135deg, #141E30, #243B55)", emoji: "🛢️", titre: "Vérification Huile", regle: "La jauge d'huile dans le moteur.", piege: "L'anneau de la jauge est généralement <span class='math-highlight'>Jaune</span>. Le niveau se fait toujours à froid et sur terrain plat." },
+
+    // --- TECHNOLOGIES DU VÉHICULE ---
+    { theme: "🤖 Technologies", couleur: "linear-gradient(135deg, #0f2027, #203a43)", emoji: "🚨", titre: "Le Système AFU", regle: "Assistance au Freinage d'Urgence.", piege: "Quand on pile (freinage brusque), l'AFU amplifie la force de freinage ET <span class='math-highlight'>allume automatiquement les feux de détresse (warnings)</span> pour prévenir derrière." },
+    { theme: "🤖 Technologies", couleur: "linear-gradient(135deg, #4CB8C4, #3CD3AD)", emoji: "🎛️", titre: "Le Régulateur de Vitesse", regle: "Comment le désactiver rapidement ?", piege: "Le régulateur se désactive si tu touches au frein, à l'embrayage, ou via le bouton. Mais appuyer à fond sur l'accélérateur permet juste de le 'dépasser' temporairement sans le couper." },
+    { theme: "🤖 Technologies", couleur: "linear-gradient(135deg, #56ccf2, #2f80ed)", emoji: "🔋", titre: "Voiture Hybride", regle: "Comment fonctionne une voiture hybride ?", piege: "En ville et à basse vitesse, elle roule en électrique. Sur route/autoroute (quand on demande de la puissance), le <span class='math-highlight'>moteur thermique (essence)</span> prend le relais." },
+
+    // --- POINTS ET PERMIS ---
+    { theme: "🛂 Le Permis", couleur: "linear-gradient(135deg, #b92b27, #1565C0)", emoji: "📉", titre: "La Perte MAXIMALE", regle: "Combien de points maximum en une fois ?", piege: "La loi est stricte : en cas de délits multiples simultanés, on ne peut te retirer que <span class='alert-highlight'>8 POINTS MAXIMUM</span> d'un seul coup. Jamais 9 !" },
+    { theme: "🛂 Le Permis", couleur: "linear-gradient(135deg, #FF512F, #DD2476)", emoji: "🎓", titre: "Stage de Récupération", regle: "Pour récupérer ses points.", piege: "Le stage permet de récupérer <span class='math-highlight'>4 points maximum</span>, une seule fois par an. En probatoire, si tu perds 3 pts ou plus = stage OBLIGATOIRE." },
+    { theme: "🛂 Le Permis", couleur: "linear-gradient(135deg, #11998e, #38ef7d)", emoji: "🗓️", titre: "Délai de Récupération", regle: "Récupération automatique sans infraction.", piege: "Petit délit (1 point) = récupéré en 6 mois. Délits graves (téléphone, alcool) = récupération du solde de 12 points au bout de <span class='math-highlight'>3 ans</span> sans infraction." },
+    { theme: "🛂 Le Permis", couleur: "linear-gradient(135deg, #f29492, #114357)", emoji: "💸", titre: "Le Paiement de l'Amende", regle: "À quel moment exact perd-on le point ?", piege: "Le point est officiellement retiré <span class='alert-highlight'>au moment où tu paies l'amende</span> (ou à l'émission du titre exécutoire), car payer équivaut à reconnaître l'infraction." },
+
+    // --- LES AUTRES USAGERS ---
+    { theme: "🚲 Usagers", couleur: "linear-gradient(135deg, #F2994A, #F2C94C)", emoji: "🚴", titre: "Dépasser un Vélo", regle: "Distance latérale (intervalle de sécurité).", piege: "En ville c'est <span class='math-highlight'>1 mètre minimum</span>. En rase campagne c'est <span class='math-highlight'>1m50</span>. Les vélos représentent 5% des tués sur la route." },
+    { theme: "🚲 Usagers", couleur: "linear-gradient(135deg, #8E2DE2, #4A00E0)", emoji: "🚶", titre: "Survie du Piéton", regle: "Les chances de survie en cas de choc.", piege: "Si la voiture roule à 50 km/h, les chances de survie du piéton sont de seulement <span class='alert-highlight'>20%</span>. À 30 km/h, elles sont de 90%. D'où l'importance des zones 30." },
+    { theme: "🚲 Usagers", couleur: "linear-gradient(135deg, #3a7bd5, #3a6073)", emoji: "🛣️", titre: "Pistes vs Bandes", regle: "Piste cyclable ou Bande cyclable ?", piege: "La 'Bande cyclable' est intégrée sur la route (juste une ligne). La 'Piste cyclable' est physiquement séparée de la route (trottoir, terre-plein)." },
+
+    // --- PANNEAUX ET MARQUAGE ---
+    { theme: "🚦 Signalisation", couleur: "linear-gradient(135deg, #4b6cb7, #182848)", emoji: "⛔", titre: "Le Blanc Barré Noir", regle: "Panneau rond, blanc avec une barre noire.", piege: "Il signifie <span class='math-highlight'>Fin de TOUTES les interdictions</span> précédemment signalées (vitesse, dépassement)... SAUF l'arrêt et le stationnement !" },
+    { theme: "🚦 Signalisation", couleur: "linear-gradient(135deg, #f12711, #f5af19)", emoji: "🟡", titre: "Zébrures & Trottoirs", regle: "Les lignes jaunes.", piege: "Bordure <span class='math-highlight'>Jaune Continue</span> = Arrêt/Stationnement interdits. Bordure <span class='math-highlight'>Jaune Discontinue</span> = Stationnement interdit (mais arrêt 2 min autorisé)." },
+    { theme: "🚦 Signalisation", couleur: "linear-gradient(135deg, #00B4DB, #0083B0)", emoji: "🗺️", titre: "Couleur des Panneaux", regle: "Les panneaux de direction.", piege: "Bleu = Autoroute. Vert = Itinéraire important reliant de grandes agglomérations. Blanc = Route locale/départementale. Cartouche Rouge = Route Nationale." },
+    { theme: "🚦 Signalisation", couleur: "linear-gradient(135deg, #ff4e50, #f9d423)", emoji: "🏔️", titre: "Balises Neige", regle: "Les poteaux sur le bord de la route en montagne.", piege: "Une balise avec un <span class='alert-highlight'>chapeau tout rouge</span> sert de repère de déneigement pour les chasse-neiges l'hiver." },
+    { theme: "🚦 Signalisation", couleur: "linear-gradient(135deg, #11998e, #38ef7d)", emoji: "⬇️", titre: "Rabattement", regle: "Le panneau bleu avec une flèche blanche vers le bas.", piege: "Il signale la réduction du nombre de voies (une voie en moins, il faut se rabattre)." },
+    { theme: "🚦 Signalisation", couleur: "linear-gradient(135deg, #8A2387, #E94057, #F27121)", emoji: "🔴", titre: "Damier Rouge/Blanc", regle: "Le grand panneau bleu avec damier.", piege: "Il signale une <span class='alert-highlight'>Voie de détresse</span> (bac à graviers pour arrêter les véhicules dont les freins ont lâché en descente)." },
+
+    // --- ÉCLAIRAGE ET VISIBILITÉ ---
+    { theme: "💡 Éclairage", couleur: "linear-gradient(135deg, #0f2027, #203a43)", emoji: "🔦", titre: "Feux Asymétriques", regle: "Pourquoi tes feux n'éclairent pas droit ?", piege: "Les feux de croisement éclairent plus loin <span class='math-highlight'>à droite</span> qu'à gauche pour voir les piétons sur le bas-côté sans éblouir les voitures en face." },
+    { theme: "💡 Éclairage", couleur: "linear-gradient(135deg, #2C3E50, #000000)", emoji: "🌃", titre: "Conduite de Nuit en Ville", regle: "En agglomération bien éclairée.", piege: "Interdit de rouler sans feu ! Minimum = <span class='math-highlight'>feux de position</span>, mais feux de croisement recommandés. Feux de route (pleins phares) INTERDITS en ville éclairée." },
+    { theme: "💡 Éclairage", couleur: "linear-gradient(135deg, #3a7bd5, #3a6073)", emoji: "🌫️", titre: "Feux de Brouillard", regle: "Avant et Arrière.", piege: "Le feu ARRIÈRE est obligatoire. Il s'utilise uniquement par Brouillard et Neige (<span class='alert-highlight'>JAMAIS sous la pluie</span>)." },
+    { theme: "💡 Éclairage", couleur: "linear-gradient(135deg, #b20a2c, #fffbd5)", emoji: "🚦", titre: "Feu Jaune (Orange)", regle: "Le feu du milieu.", piege: "Il dure <span class='math-highlight'>3 secondes</span> en agglomération, et <span class='math-highlight'>5 secondes</span> hors agglomération (car on roule plus vite, il faut plus de temps pour s'arrêter)." },
+    { theme: "💡 Éclairage", couleur: "linear-gradient(135deg, #2b5876, #4e4376)", emoji: "🚇", titre: "Dans un Tunnel", regle: "L'espacement de sécurité.", piege: "Il faut laisser une distance symbolisée par <span class='math-highlight'>2 Diodes Bleues</span> allumées sur le mur du tunnel (même à l'arrêt dans les bouchons !)." },
+
+    // --- DOCUMENTS ET ADMINISTRATIF ---
+    { theme: "📝 Papiers", couleur: "linear-gradient(135deg, #DCE35B, #45B649)", emoji: "📄", titre: "La Carte Grise", regle: "Délai de changement.", piege: "Si tu vends/achètes une voiture, ou si tu déménages, tu as <span class='math-highlight'>1 MOIS maximum</span> pour modifier le certificat d'immatriculation." },
+    { theme: "📝 Papiers", couleur: "linear-gradient(135deg, #8E2DE2, #4A00E0)", emoji: "🏢", titre: "Perte du Permis", regle: "Si tu perds ton permis de conduire.", piege: "La déclaration de perte se fait désormais en ligne sur l'ANTS, la préfecture ne gère plus ça aux guichets." },
+    { theme: "📝 Papiers", couleur: "linear-gradient(135deg, #FF416C, #FF4B2B)", emoji: "👨‍🏫", titre: "Le Jour de l'Examen", regle: "Documents pour la conduite accompagnée.", piege: "Il faut présenter le <span class='math-highlight'>Livret d'apprentissage</span> et la demande de permis de conduire. Le disque AAC se garde 3 ans à l'arrière." },
+    { theme: "📝 Papiers", couleur: "linear-gradient(135deg, #b92b27, #1565C0)", emoji: "📑", titre: "Contrôle Technique", regle: "Délai avant une vente.", piege: "Pour vendre un véhicule d'occasion, le contrôle technique doit dater de <span class='math-highlight'>moins de 6 mois</span> (ou moins de 2 mois si c'est une contre-visite)." },
+
+    // --- LES CLASSIQUES / PIÈGES STANDARDS ---
+    { theme: "🚦 Circulation", couleur: "linear-gradient(135deg, #e52d27, #b31217)", emoji: "🛑", titre: "Le Stop Glissé", regle: "Un panneau STOP impose un arrêt TOTAL à la ligne blanche.", piege: "Même à 1 km/h, c'est mort. Temps d'arrêt de 2-3 secondes. Différence avec le 'Cédez le passage' : au cédez le passage, l'arrêt n'est PAS obligatoire si la voie est libre." },
+    { theme: "🚦 Circulation", couleur: "linear-gradient(135deg, #1D976C, #93F9B9)", emoji: "🔄", titre: "Le Rond-Point", regle: "L'entrée du giratoire.", piege: "'Giratoire' = on cède le passage à gauche. Un 'Rond-Point' classique sans aucun panneau (comme l'Étoile à Paris) = Priorité à droite pour ceux qui entrent !" },
+    { theme: "🚦 Circulation", couleur: "linear-gradient(135deg, #f12711, #f5af19)", emoji: "➡️", titre: "Aller tout droit", regle: "Se positionner à une intersection.", piege: "Règle de base pour aller tout droit : On se serre le plus possible sur le bord DROIT de la chaussée (sauf flèches au sol contraires)." },
+    { theme: "🚦 Circulation", couleur: "linear-gradient(135deg, #8A2387, #E94057)", emoji: "🛣️", titre: "Voie d'Insertion", regle: "Entrer sur l'autoroute.", piege: "La voie d'accélération ne donne PAS LA PRIORITÉ. Tu dois accélérer fort et t'insérer. Tu mets le clignotant ('clicli') quand tu t'écartes." },
+    { theme: "❄️ Conditions", couleur: "linear-gradient(135deg, #00B4DB, #0083B0)", emoji: "❄️", titre: "Chaussettes à Neige", regle: "Équipement hivernal.", piege: "Les chaussettes ou chaînes se montent TOUJOURS sur les <span class='math-highlight'>Roues Motrices</span> (généralement à l'avant). La loi Montagne les rend obligatoires l'hiver." },
+    { theme: "♻️ Écologie", couleur: "linear-gradient(135deg, #11998e, #38ef7d)", emoji: "🌱", titre: "Éco-Conduite", regle: "L'économie de carburant.", piege: "Rouler à l'économie, c'est accélérer de manière franche pour atteindre sa vitesse de croisière et passer les rapports supérieurs (4e, 5e) très vite. Ne pas rester à 50 km/h en 2ème !" },
+    { theme: "🚑 Urgence", couleur: "linear-gradient(135deg, #FF416C, #FF4B2B)", emoji: "🔥", titre: "Feu dans le tunnel", regle: "L'issue de secours.", piege: "S'il y a le feu, tu sors de la voiture, tu laisses la CLÉ SUR LE CONTACT, et tu te diriges vers les issues de secours. Ne sors pas par l'entrée du tunnel !" },
+    
+    // --- LES VITESSES ---
+    { theme: "💨 Vitesse", couleur: "linear-gradient(135deg, #3a7bd5, #3a6073)", emoji: "🌫️", titre: "Le Piège du 50", regle: "La visibilité réduite.", piege: "Si la visibilité (brouillard) est inférieure à 50 mètres, la vitesse est bloquée à <span class='alert-highlight'>50 km/h sur TOUTES LES ROUTES</span> (ville, campagne, autoroute)." },
+    { theme: "💨 Vitesse", couleur: "linear-gradient(135deg, #b92b27, #1565C0)", emoji: "🌧️", titre: "Les limitations Probatoires", regle: "La pluie et le 'A'.", piege: "Route 80 = 80 pour tous. Voie express (110) = 100 pour probatoires. Autoroute (130) = 110 pour probatoires. S'IL PLEUT, les limites normales baissent à celles des probatoires." },
+
+    // --- LES PIÈGES EXTRÊMES (Boss final) ---
+    { theme: "🤯 Boss Final", couleur: "linear-gradient(135deg, #2C3E50, #000000)", emoji: "🚗-🚑", titre: "Le Gyrophare", regle: "Ambulance derrière toi.", piege: "Toutes les ambulances n'ont pas la priorité absolue ! Seuls le SAMU (gyrophare BLEU TOURNANT et sirène 2 tons) et Pompiers/Police l'ont. Les privées ne le sont pas." },
+    { theme: "🤯 Boss Final", couleur: "linear-gradient(135deg, #4CB8C4, #3CD3AD)", emoji: "👶", titre: "L'Âge du siège", regle: "Ceinture ou Siège auto ?", piege: "L'enfant DOIT avoir un système de retenue adapté (siège ou rehausseur) jusqu'à ses <span class='math-highlight'>10 ANS</span> ou s'il fait moins d'1m35." },
+    { theme: "🤯 Boss Final", couleur: "linear-gradient(135deg, #8E2DE2, #4A00E0)", emoji: "🚍", titre: "Le Bus de Ville", regle: "Clignotant gauche du bus.", piege: "En ville, si un bus sort de son arrêt, tu DOIS freiner et lui céder le passage. Hors agglomération (campagne), c'est TOI qui es prioritaire, le bus attend." },
+    { theme: "🤯 Boss Final", couleur: "linear-gradient(135deg, #f12711, #f5af19)", emoji: "🚦", titre: "Feu Orange Clignotant", regle: "Feu du milieu ou feu d'en bas ?", piege: "Feu du MILIEU clignotant = Le feu est en panne, priorité à droite. Feu EN BAS clignotant (ou flèche orange) = Tu peux passer prudemment mais le piéton/vélo est prioritaire." },
+    { theme: "🤯 Boss Final", couleur: "linear-gradient(135deg, #11998e, #38ef7d)", emoji: "🚸", titre: "Zone de Rencontre", regle: "Panneau bleu avec un piéton, vélo, voiture.", piege: "La vitesse max est de <span class='math-highlight'>20 km/h</span>. Les piétons sont prioritaires absolument PARTOUT sur la chaussée, pas besoin de passage clouté." },
+    { theme: "🤯 Boss Final", couleur: "linear-gradient(135deg, #cb2d3e, #ef473a)", emoji: "🏍️", titre: "Le Motard", regle: "Le pire geste aux secours.", piege: "On NE RETIRE JAMAIS le casque d'un motard à terre. La seule exception, c'est s'il est en arrêt cardiaque et qu'on doit lui faire un massage cardiaque." },
+    { theme: "🤯 Boss Final", couleur: "linear-gradient(135deg, #2b5876, #4e4376)", emoji: "🟡", titre: "Feu Rouge + Flèche Jaune", regle: "Au carrefour.", piege: "Si le feu est rouge mais qu'il y a un panonceau avec une flèche jaune clignotante vers la droite : tu as le droit de tourner à droite MÊME AU ROUGE (en cédant le passage)." },
+    { theme: "🤯 Boss Final", couleur: "linear-gradient(135deg, #141E30, #243B55)", emoji: "💨", titre: "Permis invalidé", regle: "Solde de points à zéro.", piege: "Permis 'invalidé' (0 point) = il faut tout repasser, code + conduite. C'est différent du permis 'suspendu' (temporaire par le juge) ou 'annulé' (immédiat par le juge)." },
+    
+    // Pour arriver à 60, j'ai rajouté les derniers pièges imparables de l'examen ETG :
+    { theme: "⚠️ Pièges ETG", couleur: "linear-gradient(135deg, #E44D26, #F16529)", emoji: "🅿️", titre: "Stationnement Unilatéral", regle: "Du 1er au 15, ou 16 au 31 ?", piege: "Du 1er au 15 du mois : on se gare du côté des numéros IMPAIRS des maisons. Du 16 au 31 : du côté des numéros PAIRS. Le changement se fait le dernier jour de la quinzaine entre 20h30 et 21h." },
+    { theme: "⚠️ Pièges ETG", couleur: "linear-gradient(135deg, #005C97, #363795)", emoji: "🚚", titre: "Poids Lourd", regle: "Distance derrière un camion.", piege: "Si tu conduis un ensemble de plus de 7 mètres de long ou plus de 3,5 tonnes, tu DOIS laisser <span class='math-highlight'>50 mètres</span> minimum avec le véhicule devant toi hors agglomération." },
+    { theme: "⚠️ Pièges ETG", couleur: "linear-gradient(135deg, #4A00E0, #8E2DE2)", emoji: "🛣️", titre: "Voie pour Véhicules Lents", regle: "La voie tout à droite en côte.", piege: "Elle est réservée aux véhicules qui ne peuvent pas rouler à plus de <span class='math-highlight'>60 km/h</span>. Si tu peux rouler à 61 km/h, tu n'as PAS le droit d'y aller." },
+    { theme: "⚠️ Pièges ETG", couleur: "linear-gradient(135deg, #00c6ff, #0072ff)", emoji: "🚭", titre: "Fumer au Volant", regle: "Est-ce interdit ?", piege: "Fumer au volant n'est pas interdit en soi... SAUF s'il y a un mineur dans le véhicule ! Dans ce cas, c'est strictement interdit (jusqu'à 750€ d'amende)." },
+    { theme: "⚠️ Pièges ETG", couleur: "linear-gradient(135deg, #11998e, #38ef7d)", emoji: "🎒", titre: "Objets sur la Plage Arrière", regle: "Poser un sac derrière.", piege: "En cas de freinage brutal à 50 km/h, un objet de 1 kg projeté vers l'avant va peser l'équivalent de <span class='alert-highlight'>50 kg</span>. Toujours tout mettre dans le coffre." },
+    { theme: "⚠️ Pièges ETG", couleur: "linear-gradient(135deg, #f12711, #f5af19)", emoji: "🚸", titre: "Croiser un Bus Scolaire", regle: "Un bus scolaire à l'arrêt avec warnings.", piege: "Tu dois ralentir fortement, voire t'arrêter, car des enfants peuvent traverser devant ou derrière le bus de manière imprévisible." },
+    { theme: "⚠️ Pièges ETG", couleur: "linear-gradient(135deg, #834d9b, #d04ed6)", emoji: "💧", titre: "Aquaplaning", regle: "Perte d'adhérence sous la pluie.", piege: "Si tu fais de l'aquaplaning, le piège c'est de freiner. <span class='alert-highlight'>NE FREINE SURTOUT PAS !</span> Tu vas partir en tête-à-queue. Il faut lâcher l'accélérateur et garder le volant droit." },
+    { theme: "⚠️ Pièges ETG", couleur: "linear-gradient(135deg, #b92b27, #1565C0)", emoji: "🚑", titre: "Hémorragie", regle: "Blessé qui saigne abondamment.", piege: "Il faut faire une <span class='math-highlight'>compression manuelle directe</span> sur la plaie (avec un tissu propre si possible). Le garrot n'est à utiliser qu'en tout dernier recours si la compression ne marche pas." }
+  ];
+
+  // 🔀 LA FONCTION MAGIQUE DE MÉLANGE (Algorithme de Fisher-Yates) 🔀
+  function melanger(array) {
+    let currentIndex = array.length, randomIndex;
+    // Tant qu'il reste des éléments à mélanger...
+    while (currentIndex !== 0) {
+      // Choisir un élément restant au hasard
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex--;
+      // Échanger cet élément avec l'élément actuel
+      [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+    }
+    return array;
+  }
+
+  // On mélange le gros tableau des 60 fiches avant de l'afficher
+  const fichesAleatoires = melanger(fiches);
+  const feed = document.getElementById('feed');
+
+  // Génération des cartes HTML avec le tableau mélangé
+  fichesAleatoires.forEach((fiche, index) => {
+    const section = document.createElement('section');
+    section.className = 'card';
+    section.style.background = fiche.couleur;
+
+    section.innerHTML = `
+      <div class="header-badges">
+        <div class="counter-badge">Fiche ${index + 1} / ${fichesAleatoires.length}</div>
+        <div class="theme-badge">${fiche.theme}</div>
+      </div>
+      <div class="emoji-big">${fiche.emoji}</div>
+      <h1 class="title">${fiche.titre}</h1>
+      <p class="rule">${fiche.regle}</p>
+      
+      <button class="reveal-btn" onclick="revelerPiege(this)">⚠️ Découvrir le piège</button>
+      <div class="secret-info">${fiche.piege}</div>
+      
+      <div class="scroll-hint">Scrolle pour la suite 👇</div>
+    `;
+
+    feed.appendChild(section);
+  });
+
+  // Action du bouton
+  function revelerPiege(bouton) {
+    const secret = bouton.nextElementSibling;
+    if (secret.style.display === "block") {
+      secret.style.display = "none";
+      bouton.innerText = "⚠️ Découvrir le piège";
+    } else {
+      secret.style.display = "block";
+      bouton.style.display = "none";
+    }
+  }
+</script>
+
+</body>
+</html>
